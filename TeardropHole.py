@@ -1,6 +1,6 @@
 # TeardropHole.py
 #
-# Fusion 360 Add-In that adds a "Teardrop-Loch" button to the Modify panel
+# Fusion 360 Add-In that adds a "Teardrop Hole" button to the Modify panel
 # (Solid workspace). It turns a selected round hole into a "teardrop" hole:
 # it replaces the top of the circular cross-section with two straight walls
 # that meet in a point, so every wall stays at or below your printer's safe
@@ -17,45 +17,45 @@
 #   Copy this whole "TeardropHole" folder (containing this .py file and the
 #   matching .manifest file) into Fusion 360's Scripts and Add-Ins dialog
 #   the same way as any script/add-in (Shift+S -> "+" -> select this
-#   folder). It will show up under "Alle Skripte und Zusatzmodule" with a
+#   folder). It will show up in the list of scripts and add-ins with a
 #   toggle switch (it's an Add-In, not a one-shot script). Turn the switch
-#   on - a "Teardrop-Loch" button then appears in the SOLID tab, MODIFY
-#   panel, for as long as the Add-In is enabled. Check "Beim Start
-#   ausführen" if you want the button to always be there.
+#   on - a "Teardrop Hole" button then appears in the SOLID tab, MODIFY
+#   panel, for as long as the Add-In is enabled. Check "Run on Startup"
+#   if you want the button to always be there.
 #
 # USE
-#   Click "Teardrop-Loch", pick one or more cylindrical hole faces, set the
+#   Click "Teardrop Hole", pick one or more cylindrical hole faces, set the
 #   overhang angle (45 is the standard safe value for FDM), click OK. If
 #   "up" in your model isn't the global Z axis, pick a straight edge that
 #   points the way you want the teardrop's point to extend (e.g. an edge
-#   running along the print's vertical build direction) in the "Oben-
-#   Richtung" field - otherwise it defaults to global Z. Tick "Ausgeschnit-
-#   tenes Stück (Dreieck) als Körper behalten" if you also want the little
+#   running along the print's vertical build direction) in the "Up
+#   direction" field - otherwise it defaults to global Z. Tick "Keep
+#   cut-off piece (triangle) as a body" if you also want the little
 #   wedge-shaped piece that gets cut off kept as its own separate body,
-#   optionally shrunk by a "Spiel" (clearance) allowance so it fits back
-#   into the real hole with some play as a printed test plug.
+#   optionally shrunk by a "Clearance" allowance so it fits back into the
+#   real hole with some play as a printed test plug.
 #
 # NOTES / LIMITATIONS
 #   - Works on cylindrical faces belonging to a solid body.
 #   - Intended for holes whose axis is roughly horizontal relative to
 #     "up". A hole whose axis points straight along "up"/"down" already
 #     prints fine as a plain circle and will be skipped with a message.
-#   - Works for through-holes as well as blind holes (Sacklöcher) - flat-
-#     bottomed or pointed. Depth is auto-detected from the selected
-#     hole's own geometry unless you enter an explicit "Lochtiefe" value.
+#   - Works for through-holes as well as blind holes - flat-bottomed
+#     or pointed. Depth is auto-detected from the selected hole's own
+#     geometry unless you enter an explicit "Hole depth" value.
 #     If there's no real hole there yet (still solid material), leave the
 #     depth field at 0 and it cuts generously through the whole part.
 #   - Needs an existing flat wall face right next to the hole to sketch
-#     on. Also needs recorded design history (Chronik) if no such
+#     on. Also needs recorded design history (timeline) if no such
 #     adjacent flat face exists, since building a construction plane
 #     without one requires it.
 #   - For a through-hole with such a face on both ends, the one currently
 #     facing the camera (i.e. the side you're looking at when you run the
-#     command) is used - so an explicit "Lochtiefe" is measured going
+#     command) is used - so an explicit "Hole depth" is measured going
 #     into the part from the visible side, not from the far end.
 #   - Each converted hole adds a sketch (and, in documents without a
 #     recorded design history, possibly a construction plane, and a
-#     construction point if "als Körper behalten" + clearance was used)
+#     construction point if "as a body" + clearance was used)
 #     to the timeline/browser tree. That's normal - Fusion needs it to
 #     build the cut.
 
@@ -67,9 +67,9 @@ import traceback
 VERSION = '2.6.3-debug'
 
 CMD_ID = 'TeardropHoleCmd'
-CMD_NAME = 'Teardrop-Loch'
-CMD_DESCRIPTION = ('Wandelt runde Lochflächen in Tränenform um, damit sie '
-                    'beim 3D-Druck ohne Stützmaterial auskommen.')
+CMD_NAME = 'Teardrop Hole'
+CMD_DESCRIPTION = ('Turns round hole faces into a teardrop shape so they '
+                    'can be 3D printed without support material.')
 WORKSPACE_ID = 'FusionSolidEnvironment'
 PANEL_ID = 'SolidModifyPanel'
 COMMAND_BESIDE_ID = ''
@@ -105,7 +105,7 @@ def run(context):
             control.isPromotedByDefault = True
     except Exception:
         if _ui:
-            _ui.messageBox('TeardropHole konnte nicht gestartet werden:\n{}'.format(traceback.format_exc()))
+            _ui.messageBox('TeardropHole failed to start:\n{}'.format(traceback.format_exc()))
 
 
 def stop(context):
@@ -120,7 +120,7 @@ def stop(context):
             cmd_def.deleteMe()
     except Exception:
         if _ui:
-            _ui.messageBox('TeardropHole konnte nicht sauber beendet werden:\n{}'.format(traceback.format_exc()))
+            _ui.messageBox('TeardropHole failed to stop cleanly:\n{}'.format(traceback.format_exc()))
 
 
 class CommandCreatedHandler(adsk.core.CommandCreatedEventHandler):
@@ -133,8 +133,8 @@ class CommandCreatedHandler(adsk.core.CommandCreatedEventHandler):
             inputs = cmd.commandInputs
 
             selection_input = inputs.addSelectionInput(
-                'faces', 'Lochflächen',
-                'Wähle eine oder mehrere zylindrische Lochflächen aus')
+                'faces', 'Hole faces',
+                'Select one or more cylindrical hole faces')
             selection_input.setSelectionLimits(1, 0)
             try:
                 selection_input.addSelectionFilter('CylindricalFaces')
@@ -142,41 +142,40 @@ class CommandCreatedHandler(adsk.core.CommandCreatedEventHandler):
                 selection_input.addSelectionFilter('Faces')
 
             up_input = inputs.addSelectionInput(
-                'upEdge', 'Oben-Richtung (optional)',
-                'Optional: eine gerade Kante anklicken, die in deinem Modell nach '
-                '"oben" (Druckrichtung) zeigt. Leer lassen = globale Z-Achse.')
+                'upEdge', 'Up direction (optional)',
+                'Optional: click a straight edge that points "up" in your model '
+                '(the print direction). Leave empty = global Z axis.')
             up_input.setSelectionLimits(0, 1)
             up_input.addSelectionFilter('LinearEdges')
             up_input.isEnabled = True
 
             default_angle = adsk.core.ValueInput.createByReal(math.radians(45.0))
-            inputs.addValueInput('angle', 'Überhangwinkel (von der Vertikalen)', 'deg', default_angle)
+            inputs.addValueInput('angle', 'Overhang angle (from vertical)', 'deg', default_angle)
 
             default_depth = adsk.core.ValueInput.createByReal(0.0)
             depth_input = inputs.addValueInput(
-                'depth', 'Lochtiefe (0 = automatisch erkennen)', 'mm', default_depth)
+                'depth', 'Hole depth (0 = auto-detect)', 'mm', default_depth)
             depth_input.tooltip = (
-                'Wie tief das Loch werden soll. 0 = automatisch erkennen (an der '
-                'Tiefe des ausgewählten Lochs, falls vorhanden, sonst durch das '
-                'ganze Bauteil). Trage einen Wert ein, wenn du z.B. ein Sackloch '
-                'mit fester Tiefe willst.')
+                'How deep the hole should be. 0 = auto-detect (from the depth of '
+                'the selected hole if there is one, otherwise through the whole '
+                'part). Enter a value if you want e.g. a blind hole with a fixed '
+                'depth.')
 
             cutout_input = inputs.addBoolValueInput(
-                'keepCutout', 'Ausgeschnittenes Stück (Dreieck) als Körper behalten', True, '', False)
+                'keepCutout', 'Keep cut-off piece (triangle) as a body', True, '', False)
             cutout_input.tooltip = (
-                'Erstellt das kleine, keilförmige Stück, das oben abgeschnitten wird, '
-                'zusätzlich als eigenen (separaten) Körper - z.B. zum Ansehen oder '
-                'Weiterverwenden. Der Schnitt am Loch selbst passiert trotzdem ganz normal.')
+                'Also creates the small wedge-shaped piece that gets cut off at the '
+                'top as its own (separate) body - e.g. to look at or reuse. The cut '
+                'in the hole itself still happens as normal.')
 
             default_clearance = adsk.core.ValueInput.createByReal(0.01)  # 0.1 mm in cm
             clearance_input = inputs.addValueInput(
-                'clearance', 'Spiel (Ausschnitt-Körper kleiner)', 'mm', default_clearance)
+                'clearance', 'Clearance (shrinks cutout body)', 'mm', default_clearance)
             clearance_input.tooltip = (
-                'Nur relevant, wenn oben "als Körper behalten" angehakt ist: um wie '
-                'viel der separate Körper rundum kleiner gemacht wird, damit er beim '
-                'FDM-Druck als Testeinsatz mit etwas Spiel in das echte Loch passt. '
-                '0.1 mm ist ein üblicher Startwert - je nach Drucker/Kalibrierung '
-                'anpassen.')
+                'Only relevant if "as a body" above is ticked: how much smaller the '
+                'separate body is made all around, so that as an FDM-printed test '
+                'plug it fits into the real hole with some play. 0.1 mm is a common '
+                'starting value - adjust for your printer/calibration.')
 
             on_execute = CommandExecuteHandler()
             cmd.execute.add(on_execute)
@@ -187,7 +186,7 @@ class CommandCreatedHandler(adsk.core.CommandCreatedEventHandler):
             _handlers.append(on_destroy)
         except Exception:
             if _ui:
-                _ui.messageBox('Fehler beim Aufbau des Dialogs:\n{}'.format(traceback.format_exc()))
+                _ui.messageBox('Failed to build the dialog:\n{}'.format(traceback.format_exc()))
 
 
 class CommandDestroyHandler(adsk.core.CommandEventHandler):
@@ -217,7 +216,7 @@ class CommandExecuteHandler(adsk.core.CommandEventHandler):
             clearance = clearance_input.value if clearance_input else 0.0  # cm
 
             if not (0.0 < angle_rad < math.radians(90.0)):
-                _ui.messageBox('Der Überhangwinkel muss zwischen 0 und 90 Grad liegen.')
+                _ui.messageBox('The overhang angle must be between 0 and 90 degrees.')
                 return
 
             up_vector = adsk.core.Vector3D.create(0.0, 0.0, 1.0)
@@ -243,14 +242,14 @@ class CommandExecuteHandler(adsk.core.CommandEventHandler):
 
             debug_text = '\n'.join(_debug_lines)
             if errors:
-                _ui.messageBox('[v{}] {} von {} Loch/Löchern umgewandelt.\n\nFehler bei den restlichen:\n{}\n\nDEBUG:\n{}'.format(
+                _ui.messageBox('[v{}] Converted {} of {} hole(s).\n\nErrors for the rest:\n{}\n\nDEBUG:\n{}'.format(
                     VERSION, processed, len(faces), '\n---\n'.join(errors), debug_text))
             elif processed:
-                _ui.messageBox('[v{}] {} Loch/Löcher in Tränenform umgewandelt.\n\nDEBUG:\n{}'.format(
+                _ui.messageBox('[v{}] Converted {} hole(s) to teardrop shape.\n\nDEBUG:\n{}'.format(
                     VERSION, processed, debug_text))
         except Exception:
             if _ui:
-                _ui.messageBox('Ausführung fehlgeschlagen:\n{}'.format(traceback.format_exc()))
+                _ui.messageBox('Execution failed:\n{}'.format(traceback.format_exc()))
 
 
 def make_teardrop_hole(face, angle_rad, up_world, depth_override=0.0, keep_cutout=False, clearance=0.0):
@@ -268,7 +267,7 @@ def make_teardrop_hole(face, angle_rad, up_world, depth_override=0.0, keep_cutou
 
     geom = face.geometry
     if not isinstance(geom, adsk.core.Cylinder):
-        _ui.messageBox('Eine ausgewählte Fläche ist nicht zylindrisch - übersprungen.')
+        _ui.messageBox('A selected face is not cylindrical - skipped.')
         return False
 
     body = face.body
@@ -297,7 +296,7 @@ def make_teardrop_hole(face, angle_rad, up_world, depth_override=0.0, keep_cutou
         pairs.append((edge, edge_geom, neighbor))
 
     if not pairs:
-        _ui.messageBox('Auf einer Fläche wurde keine volle Kreiskante gefunden - übersprungen.')
+        _ui.messageBox('No full circular edge was found on a face - skipped.')
         return False
 
     pairs_with_host = [p for p in pairs if p[2] is not None]
@@ -329,7 +328,7 @@ def make_teardrop_hole(face, angle_rad, up_world, depth_override=0.0, keep_cutou
     elif len(pairs_with_host) > 1:
         # A through-hole usually has such a pair at BOTH ends - of those,
         # pick the one whose wall face currently faces the camera (i.e.
-        # the side you're actually looking at), so an explicit "Lochtiefe"
+        # the side you're actually looking at), so an explicit "Hole depth"
         # is measured going into the part from that visible face.
         try:
             eye = _app.activeViewport.camera.eye
@@ -364,8 +363,8 @@ def make_teardrop_hole(face, angle_rad, up_world, depth_override=0.0, keep_cutou
     hole_edge, circle_edge, sketch_host = chosen
 
     _debug_lines.append(
-        'host: kreiskanten={} davon_mit_wand={} nach_bare_disk_filter={} '
-        'sketch_host_kanten={} kreis_mitte=({:.4f}, {:.4f}, {:.4f})'.format(
+        'host: circle_edges={} with_wall={} after_bare_disk_filter={} '
+        'sketch_host_edges={} circle_center=({:.4f}, {:.4f}, {:.4f})'.format(
             len(pairs), n_pairs_with_host_raw, len(pairs_with_host),
             (sketch_host.edges.count if sketch_host is not None else -1),
             circle_edge.center.x, circle_edge.center.y, circle_edge.center.z))
@@ -384,9 +383,9 @@ def make_teardrop_hole(face, angle_rad, up_world, depth_override=0.0, keep_cutou
     up_in_plane.subtract(along_axis)
 
     if up_in_plane.length < 1e-6:
-        _ui.messageBox("Ein Loch hat eine zur UP_VECTOR-Richtung parallele Achse (senkrechtes "
-                        "Loch) - das druckt schon als Kreis problemlos und braucht keine "
-                        "Tränenform. Übersprungen.")
+        _ui.messageBox("A hole has its axis parallel to the up direction (vertical "
+                        "hole) - it already prints fine as a circle and doesn't need a "
+                        "teardrop shape. Skipped.")
         return False
     up_in_plane.normalize()
 
@@ -434,12 +433,11 @@ def make_teardrop_hole(face, angle_rad, up_world, depth_override=0.0, keep_cutou
             sketch_host = comp.constructionPlanes.add(plane_input)
         except Exception:
             _ui.messageBox(
-                'Für dieses Loch gibt es keine angrenzende ebene Fläche, und '
-                'Konstruktionsebenen lassen sich in diesem Dokument nicht per '
-                'Skript anlegen (vermutlich läuft es ohne Verlauf/Chronik - '
-                'Direktmodus). Bitte "Konstruktionsverlauf aufzeichnen" für '
-                'dieses Dokument aktivieren, oder ein Loch wählen, das direkt '
-                'an eine ebene Wandfläche grenzt.')
+                'This hole has no adjacent flat face, and construction planes '
+                'cannot be created by script in this document (it probably has '
+                'no design history/timeline - direct modeling mode). Please turn '
+                'on "Capture Design History" for this document, or pick a hole '
+                'that directly borders a flat wall face.')
             return False
 
     sketch = comp.sketches.add(sketch_host)
@@ -480,7 +478,7 @@ def make_teardrop_hole(face, angle_rad, up_world, depth_override=0.0, keep_cutou
         lines.addByTwoPoints(s_apex, s_right)
 
     if sketch.profiles.count == 0:
-        _ui.messageBox('Für ein Loch konnte kein geschlossenes Profil erzeugt werden - übersprungen.')
+        _ui.messageBox('Could not create a closed profile for a hole - skipped.')
         return False
 
     # Fusion refuses to split the (projected) circle into two arcs at the
@@ -524,8 +522,8 @@ def make_teardrop_hole(face, angle_rad, up_world, depth_override=0.0, keep_cutou
     profile_cap = pick_closest(cap_area, exclude=profile_circle)
 
     if profile_circle is None or profile_cap is None:
-        _ui.messageBox('Für ein Loch konnten nicht beide Teilflächen (Rundung + Spitze) '
-                        'gefunden werden - übersprungen.')
+        _ui.messageBox('Could not find both regions (round part + point) for '
+                        'a hole - skipped.')
         return False
 
     # How deep to cut: an explicit value wins if given. Otherwise, try to
@@ -648,11 +646,11 @@ def make_teardrop_hole(face, angle_rad, up_world, depth_override=0.0, keep_cutou
 
             if cutout_feature.bodies.count > 0:
                 cutout_body = cutout_feature.bodies.item(0)
-                cutout_body.name = 'Teardrop-Ausschnitt'
+                cutout_body.name = 'Teardrop cutout'
             else:
-                _debug_lines.append('keep_cutout: keine Koerper aus profile_cap erzeugt')
+                _debug_lines.append('keep_cutout: no bodies created from profile_cap')
         except Exception:
-            _debug_lines.append('keep_cutout fehlgeschlagen: {}'.format(traceback.format_exc()))
+            _debug_lines.append('keep_cutout failed: {}'.format(traceback.format_exc()))
 
     try:
         # Preferred: both profiles cut together as one feature. This MUST
@@ -699,7 +697,7 @@ def make_teardrop_hole(face, angle_rad, up_world, depth_override=0.0, keep_cutou
             # (vertex/sketch point), not a raw Point3D - "invalid ref
             # point" otherwise. A construction point would work too, but
             # comp.constructionPoints.add() needs a document with
-            # recorded design history (Parametrik) and throws
+            # recorded design history (parametric modeling) and throws
             # "Environment is not supported" without one. A sketch point
             # added to the already-existing `sketch` sidesteps both
             # problems - sketch geometry works fine in this document
@@ -716,6 +714,6 @@ def make_teardrop_hole(face, angle_rad, up_world, depth_override=0.0, keep_cutou
                 adsk.core.ValueInput.createByReal(scale_factor))
             scales.add(scale_input)
         except Exception:
-            _debug_lines.append('Spiel-Skalierung fehlgeschlagen: {}'.format(traceback.format_exc()))
+            _debug_lines.append('Clearance scaling failed: {}'.format(traceback.format_exc()))
 
     return True

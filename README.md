@@ -1,55 +1,57 @@
-# Teardrop-Loch – Fusion 360 Add-In
+# Teardrop Hole – Fusion 360 Add-In
 
-## Wofür ist das?
+> English translation of [deffel6/TeardropHole](https://github.com/deffel6/TeardropHole), which is in German. All credit for the add-in goes to its original author.
 
-Wenn man in Fusion 360 ein rundes Loch konstruiert, das später **liegend** gedruckt wird (die Lochachse zeigt also seitwärts, nicht nach oben), hat der Drucker beim oberen Teil des Kreises ein Problem: Die letzten Schichten müssen einen zunehmend größeren Überhang ohne Unterlage drucken. Das Ergebnis sind hängende Fäden, eine ovale statt runde Öffnung, oder man braucht Stützmaterial, das man danach mühsam wieder rauspulen muss.
+## What is it for?
 
-Die bekannte Lösung dafür ist die **Tränenform** (teardrop hole): Man ersetzt den oberen Teil des Kreises durch eine Spitze. Jede Wand bleibt dann innerhalb des Winkels, den der Drucker ohne Stütze schafft (meist 45°) – der Rest des Lochs bleibt ein ganz normaler Kreis.
+When you design a round hole in Fusion 360 that will later be printed **lying down** (the hole's axis points sideways, not up), the printer has a problem with the top part of the circle: the last layers have to bridge an increasingly large overhang with nothing underneath. The result is sagging strands, an oval instead of a round opening, or you need support material that you then have to painstakingly pick out afterwards.
+
+The well-known fix for this is the **teardrop shape** (teardrop hole): you replace the top part of the circle with a point. Every wall then stays within the angle your printer can manage without support (usually 45°) – the rest of the hole stays a perfectly normal circle.
 
 <p align="center">
   <img src="docs/teardrop.svg" width="660"
-       alt="Links ein rundes Loch, dessen oberer Bereich rot gestrichelt als Überhang markiert ist. Rechts dieselbe Bohrung als Tränenform: der untere Teil bleibt kreisrund, oben laufen zwei Flanken unter 45 Grad zu einer Spitze zusammen.">
+       alt="On the left, a round hole whose top section is marked with a red dashed line as an overhang. On the right, the same hole as a teardrop: the lower part stays circular, while at the top two flanks at 45 degrees meet in a point.">
 </p>
 
-## Was macht das Add-In?
+## What does the add-in do?
 
-Es fügt in Fusion 360 einen Button **"Teardrop-Loch"** hinzu (Solid-Tab → Ändern-Panel). Man wählt damit eine oder mehrere runde Lochflächen im Modell aus, gibt den erlaubten Überhangwinkel ein (Standard: 45°) und das Add-In schneidet automatisch die passende Spitze oben ins Loch.
+It adds a **"Teardrop Hole"** button to Fusion 360 (Solid tab → Modify panel). With it you select one or more round hole faces in the model, enter the allowed overhang angle (default: 45°), and the add-in automatically cuts the matching point into the top of the hole.
 
-## Für wen ist das interessant?
+## Who is this for?
 
-Für alle, die in Fusion 360 konstruieren und ihre Teile auf einem FDM-3D-Drucker (Filament) drucken – z.B. Gehäuse mit seitlichen Schraublöchern, Kabeldurchführungen oder Steckverbindern. Bei Löchern, deren Achse beim Druck senkrecht nach oben zeigt, braucht man das Ganze nicht (die drucken als Kreis ohnehin problemlos).
+Anyone who designs in Fusion 360 and prints their parts on an FDM (filament) 3D printer – e.g. enclosures with screw holes in the side, cable pass-throughs or connectors. Holes whose axis points straight up during printing don't need any of this (they print fine as a circle anyway).
 
 ## Installation
 
-1. Den Ordner `TeardropHole 13` (mit `.py`- und `.manifest`-Datei) irgendwo dauerhaft ablegen (nicht im Downloads-Ordner, der wird gerne mal aufgeräumt).
-2. In Fusion 360: **Werkzeuge → Add-Ins → Skripte und Zusatzmodule** (oder Umschalt+S).
-3. Über das **+** den Ordner auswählen.
-4. Den Schalter bei "TeardropHole" aktivieren (und optional "Beim Start ausführen" ankreuzen).
-5. Der Button "Teardrop-Loch" erscheint im Solid-Tab, im Ändern-Panel.
+1. Put the folder `TeardropHole 13` (with the `.py` and `.manifest` files) somewhere permanent (not in your Downloads folder, which tends to get cleaned up).
+2. In Fusion 360: **Utilities → Add-Ins → Scripts and Add-Ins** (or Shift+S).
+3. Use the **+** to select the folder.
+4. Turn on the switch next to "TeardropHole" (and optionally tick "Run on Startup").
+5. The "Teardrop Hole" button appears in the Solid tab, in the Modify panel.
 
-**Wichtig beim Aktualisieren einer bestehenden Installation:** Fusion identifiziert das Add-In über die `id`/`name` im Manifest (`"TeardropHole"`), nicht über den Ordnernamen – ein neuer Ordner mit höherer Versionsnummer wird trotzdem als dasselbe Add-In erkannt, und der zuvor geladene Python-Code bleibt im laufenden Fusion-Prozess gecacht. Nach dem Hinzufügen einer neuen Version daher **Fusion 360 komplett beenden und neu starten** (nicht nur Add-In aus-/einschalten), damit der neue Code wirklich geladen wird.
+**Important when updating an existing installation:** Fusion identifies the add-in by the `id`/`name` in the manifest (`"TeardropHole"`), not by the folder name – a new folder with a higher version number is still recognized as the same add-in, and the previously loaded Python code stays cached in the running Fusion process. So after adding a new version, **quit Fusion 360 completely and restart it** (don't just switch the add-in off and on again) so that the new code is actually loaded.
 
-## Bedienung
+## Usage
 
-1. Button klicken.
-2. Eine oder mehrere zylindrische Lochflächen auswählen.
-3. Optional: eine Kante anklicken, die in deinem Modell nach "oben" (Druckrichtung) zeigt – falls das nicht die Standard-Z-Achse ist.
-4. Überhangwinkel eintragen (45° ist ein guter Standardwert für die meisten Drucker/Materialien).
-5. Lochtiefe: bei 0 wird die Tiefe automatisch aus dem ausgewählten Loch erkannt (funktioniert bei Durchgangslöchern und Sacklöchern, auch mit spitzem Boden). Gibt es dort noch gar kein Loch (nur eine Referenzfläche auf massivem Material), trägst du hier die gewünschte Tiefe manuell ein.
-6. Optional: "Ausgeschnittenes Stück (Dreieck) als Körper behalten" ankreuzen, wenn du das kleine, keilförmige Stück, das oben abgeschnitten wird, zusätzlich als eigenen Körper haben möchtest (z.B. zum Ansehen oder Weiterverwenden). Der Schnitt am Loch selbst passiert trotzdem ganz normal. Im Feld "Spiel" darunter kannst du festlegen, um wie viel dieser separate Körper rundum kleiner gemacht wird (Standard 0,1 mm), damit er sich z.B. als gedruckter Testeinsatz mit etwas Spiel ins echte Loch stecken lässt.
-7. OK – fertig.
+1. Click the button.
+2. Select one or more cylindrical hole faces.
+3. Optional: click an edge that points "up" (the print direction) in your model – in case that isn't the default Z axis.
+4. Enter the overhang angle (45° is a good default for most printers/materials).
+5. Hole depth: at 0 the depth is detected automatically from the selected hole (works for through-holes and blind holes, including ones with a pointed bottom). If there's no hole there at all yet (just a reference face on solid material), enter the desired depth here manually.
+6. Optional: tick "Keep cut-off piece (triangle) as a body" if you also want the small wedge-shaped piece that gets cut off at the top as its own body (e.g. to look at or reuse). The cut in the hole itself still happens as normal. In the "Clearance" field below it you can set how much smaller this separate body is made all around (default 0.1 mm), so that e.g. as a printed test plug it fits into the real hole with some play.
+7. OK – done.
 
-*Funktioniert bei Durchgangslöchern und Sacklöchern mit zylindrischer Fläche, die direkt an eine ebene Wandfläche grenzt.*
+*Works for through-holes and blind holes with a cylindrical face that directly borders a flat wall face.*
 
-## Versionsverlauf
+## Version history
 
-| Version | Änderungen |
+| Version | Changes |
 |---|---|
-| 2.4.0 | Stand vor der Spiel/Clearance-Funktion (Ordner `TeardropHole 11`). Ausschnitt-Körper wird direkt aus `profile_cap` extrudiert, symmetrisch (funktioniert, aber ragt bei einem behaltenen Körper prinzipbedingt etwas in beide Richtungen). |
-| 2.5.0–2.5.3 | Versuche, ein "Spiel" (Clearance) für den Ausschnitt-Körper einzubauen (Ordner `TeardropHole 12`, iterativ direkt am Code gefixt). Eine zweite, konzentrische Skizze für die kleinere Form hat die Profil-Erkennung des echten Schnitts durcheinandergebracht (Bauteil wurde in zwei Hälften getrennt). Offset-Fläche auf allen Flächen des fertigen Körpers scheiterte an Fusions Anforderung einer unveränderten Referenzfläche. Der Ausschnitt-Körper wurde außerdem symmetrisch über die volle (verdoppelte) Schnitttiefe extrudiert und ragte dadurch weit aus der Wand heraus. |
-| **2.6.0** | Sauberer Neuaufbau in eigenem Ordner (`TeardropHole 13`), alle drei Probleme behoben: Ausschnitt-Körper wird wieder direkt aus `profile_cap` erzeugt (wie 2.4.0), aber **einseitig** ins Material extrudiert (Richtung anhand der Wandflächen-Normale bestimmt) statt symmetrisch/doppelt – kein Herausragen mehr. Das Spiel wird per **Skalierung** um den Lochmittelpunkt umgesetzt statt per zweiter Skizze oder Offset-Fläche – funktioniert zuverlässig auch mit der spitzen Ecke der Tränenform. |
-| **2.6.1** | Der Skalierpunkt wurde per `comp.constructionPoints.add()` angelegt - das scheitert mit `RuntimeError 3: Environment is not supported` in Dokumenten ohne aufgezeichneten Konstruktionsverlauf (Direktmodus). Fix-Versuch: den `center`-Punkt (ein einfaches `Point3D`) direkt an die Skalierfunktion übergeben. |
-| **2.6.2** | `ScaleFeatureInput` akzeptiert kein rohes `Point3D` als Basispunkt (`RuntimeError 3: invalid ref point`) - es braucht eine echte Referenz-Entität (Vertex/Sketch-Punkt). Fix-Versuch: einen Sketch-Punkt in der bereits vorhandenen Skizze anlegen und den als Basispunkt verwenden. |
-| **2.6.3** | Der neue Sketch-Punkt + die Skalierung liefen VOR dem echten Schnitt und haben `profile_circle`/`profile_cap` ungültig gemacht - der Hauptschnitt schlug komplett fehl ("invalid profile(s)", Loch blieb ein reiner Kreis ohne Spitze, obwohl der separate Ausschnitt-Körper schon korrekt aussah). Fix: Reihenfolge geändert - Ausschnitt-Körper erzeugen, **sofort** danach der echte Schnitt (nichts dazwischen, wie in der bewährten v2.4.0-Reihenfolge), und die Spiel-Skalierung erst ganz am Ende, wenn die Profile nicht mehr gebraucht werden. |
+| 2.4.0 | State before the clearance feature (folder `TeardropHole 11`). The cutout body is extruded directly from `profile_cap`, symmetrically (works, but by design a kept body sticks out a bit in both directions). |
+| 2.5.0–2.5.3 | Attempts to add a "clearance" for the cutout body (folder `TeardropHole 12`, fixed iteratively directly in the code). A second, concentric sketch for the smaller shape confused the profile detection of the real cut (the part was split into two halves). An offset face on all faces of the finished body failed because Fusion requires an unchanged reference face. On top of that, the cutout body was extruded symmetrically over the full (doubled) cut depth and therefore stuck far out of the wall. |
+| **2.6.0** | Clean rebuild in its own folder (`TeardropHole 13`), all three problems fixed: the cutout body is again created directly from `profile_cap` (as in 2.4.0), but extruded **one-sided** into the material (direction determined from the wall face normal) instead of symmetrically/doubled – no more sticking out. The clearance is done by **scaling** about the hole's center point instead of with a second sketch or an offset face – works reliably even with the pointed corner of the teardrop shape. |
+| **2.6.1** | The scale point was created with `comp.constructionPoints.add()` – that fails with `RuntimeError 3: Environment is not supported` in documents without recorded design history (direct modeling mode). Attempted fix: pass the `center` point (a plain `Point3D`) directly to the scale function. |
+| **2.6.2** | `ScaleFeatureInput` doesn't accept a raw `Point3D` as its base point (`RuntimeError 3: invalid ref point`) – it needs a real reference entity (vertex/sketch point). Attempted fix: create a sketch point in the already existing sketch and use that as the base point. |
+| **2.6.3** | The new sketch point + the scaling ran BEFORE the real cut and invalidated `profile_circle`/`profile_cap` – the main cut failed completely ("invalid profile(s)", the hole stayed a plain circle without a point, even though the separate cutout body already looked right). Fix: changed the order – create the cutout body, **immediately** followed by the real cut (nothing in between, as in the proven v2.4.0 order), and the clearance scaling only at the very end, when the profiles are no longer needed. |
 
-**Konvention:** Bei größeren Änderungen einen neuen Ordner `TeardropHole <Version>` anlegen (Datei- und Manifest-Version parallel hochzählen) und danach Fusion 360 neu starten, siehe Installationshinweis oben.
+**Convention:** For bigger changes, create a new folder `TeardropHole <version>` (bump the file and manifest version together) and then restart Fusion 360, see the installation note above.
